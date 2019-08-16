@@ -1,0 +1,92 @@
+% typgloss
+% A LaTeX package to typeset linguistic abbreviations and syntactic annotations in interlinear glossed examples
+% Repository: https://github.com/tpellard/typgloss
+% E-mail: thomas.pellard@cnrs.fr
+
+\NeedsTeXFormat{LaTeX2e}[1996/10/24]%
+\ProvidesPackage{typgloss}%
+[2019-08-16 v.0.1 typgloss package for linguistic abbreviations and syntactic annotations]%
+
+% The package should be loaded *after* leipzig and gb4e.
+% It converts all upper case grammatical abbreviations to small caps
+% within interlinear glossed texts. If leipzig is loaded, it passes
+% them in lower case form to \acrshort{}. It also works with person
+% number labels (1, 2, 3). It also correctly formats bracketed annotations.
+
+% New boolean checking whether the leipzig package is loaded or not
+\newif\ifleipzig
+\@ifpackageloaded{leipzig}{\leipzigtrue}{\leipzigfalse}
+  
+% Gloss formatting command
+% The definition depends on whether is loaded or not.
+% If leipzig is loaded, pass the lower case abbreviation to \acrshort{}.
+\ifleipzig \newcommand{\grlblformat}[1]{\lowercase{\acrshort{#1}}}%
+% If not, put the lower case abreviation in small caps.
+\else \newcommand{\grlblformat}[1]{\textsc{\lowercase{#1}}}%
+\fi
+
+% Formatting of syntactic annotations
+% brackets are always upright
+\newcommand{\syntbformat}[1]{\textup{#1}}
+% alphanumeric annotations are always upright and subscript
+\newcommand{\syntannformat}[1]{\textsubscript{\textup{#1}}}
+% negative space to correct the alignment in interlinar glossed examples
+\newcommand{\syntnegspace}{$\!\!$}
+  
+% Regular expression replacements
+\RequirePackage{expl3}
+\ExplSyntaxOn
+% wrap strings of upper case letters, single upper case letters that
+% are not at the beginning of word, and the numbers 1, 2, and 3 inside \grlblformat
+\newcommand{\grlbl}[1]{{
+  \XeTeXinterchartokenstate=0
+  \tl_set:Nn \l_temp_tl {#1}
+  
+  % strings of 2 or more upper case letters
+  \regex_replace_all:nnN {[A-Z][A-Z]+} {\c{grlblformat}\cB\{\0\cE\}} \l_temp_tl
+
+  % one-letter abbreviations A, S, and P, as well as person numbers require special attention with leipzig
+  \ifleipzig
+  \regex_replace_all:nnN {([^a-zA-Z])([ASP])\Z} {\1\c{grlblformat}\cB\{\2arg\cE\}} \l_temp_tl
+  \regex_replace_all:nnN {([^a-zA-Z])([ASP])([^a-zA-Z])} {\1\c{grlblformat}\cB\{\2arg\cE\}\3} \l_temp_tl
+  \regex_replace_all:nnN {1} {\c{grlblformat}\cB\{first\cE\}} \l_temp_tl
+  \regex_replace_all:nnN {2} {\c{grlblformat}\cB\{second\cE\}} \l_temp_tl
+  \regex_replace_all:nnN {3} {\c{grlblformat}\cB\{third\cE\}} \l_temp_tl
+  \else\fi
+
+  % other one-letter abbreviations
+  \regex_replace_all:nnN {([^a-zA-Z])([A-Z])([^a-zA-Z])} {\1\c{grlblformat}\cB\{\2\cE\}\3} \l_temp_tl
+  \regex_replace_all:nnN {([^a-zA-Z])([A-Z])\Z} {\1\c{grlblformat}\cB\{\2\cE\}} \l_temp_tl
+
+  \tl_use:N \l_temp_tl
+}}
+
+% wrap brackets and following annotations inside \syntbformat{} and \syntannformat{}
+% add \syntnegspace in case of opening brackets
+\newcommand{\syntbann}[1]{{
+  \XeTeXinterchartokenstate=0
+  \tl_set:Nn \l_temp_tl {#1}
+  
+  \regex_replace_all:nnN {(\[+)(\S*)} {\c{syntbformat}\cB\{\1\cE\}\c{syntannformat}\cB\{\2\cE\}\c{syntnegspace}} \l_temp_tl
+  \regex_replace_all:nnN {(\]+)(\S*)} {\c{syntbformat}\cB\{\1\cE\}\c{syntannformat}\cB\{\2\cE\}} \l_temp_tl
+
+  \tl_use:N \l_temp_tl
+}}
+\ExplSyntaxOff
+
+% Each word in the first line of gets wrapped inside \syntbann{}
+% Font formatting should be done by redefining \eachwordonestyle
+\newcommand{\eachwordonestyle}{}
+\renewcommand{\eachwordone}{\eachwordonestyle\syntbann}
+
+% Each word in the second line of gets wrapped inside \grlbl{}
+% Font formatting should be done by redefining \eachwordtwostyle
+\newcommand{\eachwordtwostyle}{}
+\renewcommand{\eachwordtwo}{\eachwordtwostyle\grlbl}
+
+% langsci-gb4e requires a patch since it uses an older code
+\RequirePackage{xpatch}
+\xpatchcmd{\getwords}%
+  {\strut#3{}}%
+  {{\strut#3}}%
+  {}{}%
