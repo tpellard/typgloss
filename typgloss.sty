@@ -5,7 +5,7 @@
 
 \NeedsTeXFormat{LaTeX2e}[1996/10/24]%
 \ProvidesPackage{typgloss}%
-[2019-08-16 v.0.0.1 typgloss package for linguistic abbreviations and syntactic annotations]%
+[2020-07-09 v.0.0.2 typgloss package for linguistic abbreviations and syntactic annotations]%
 
 % The package should be loaded *after* leipzig and gb4e.
 % It converts all upper case grammatical abbreviations to small caps
@@ -90,3 +90,17 @@
   {\strut#3{}}%
   {{\strut#3}}%
   {}{}%
+
+% patch for linguex
+\@ifpackageloaded{linguex}{%
+\def\getwords(#1,#2)#3 #4\\% #1=linebox, #2=\each, #3=1st word, #4=remainder
+   {\setbox#1=\vbox{\hbox{#2{\strut\ifindex\expandafter\checkforbr\fi#3} }%
+%    {\setbox#1=\vbox{\hbox{#2{\strut#3} }% adds space
+                    \unvbox#1}%
+    \def\more{#4}%
+    \ifx\more\empty\let\more=\donewords
+    \else\let\more=\getwords 
+    \fi
+    \more(#1,#2)#4\\%
+   }%
+}{}
