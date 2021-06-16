@@ -31,15 +31,17 @@
 % alphanumeric annotations are always upright and subscript
 \newcommand{\syntannformat}[1]{\textsubscript{\textup{#1}}}
 % negative space to correct the alignment in interlinar glossed examples
-\newcommand{\syntnegspace}{$\!\!$}
-  
+\newlength{\wspace}
+\setlength{\wspace}{\fontdimen2\font plus\fontdimen3\font minus\fontdimen4\font}
+\newcommand{\syntnegspace}{\hskip -\wspace}
+
 % Regular expression replacements
 \RequirePackage{expl3}
 \ExplSyntaxOn
 % wrap strings of upper case letters, single upper case letters that
 % are not at the beginning of word, and the numbers 1, 2, and 3 inside \grlblformat
 \newcommand{\grlbl}[1]{{
-  \XeTeXinterchartokenstate=0
+%   \XeTeXinterchartokenstate=0
   \tl_set:Nn \l_temp_tl {#1}
   
   % strings of 2 or more upper case letters
@@ -64,7 +66,7 @@
 % wrap brackets and following annotations inside \syntbformat{} and \syntannformat{}
 % add \syntnegspace in case of opening brackets
 \newcommand{\syntbann}[1]{{
-  \XeTeXinterchartokenstate=0
+%   \XeTeXinterchartokenstate=0
   \tl_set:Nn \l_temp_tl {#1}
   
   \regex_replace_all:nnN {(\[+)(\S*)} {\c{syntbformat}\cB\{\1\cE\}\c{syntannformat}\cB\{\2\cE\}\c{syntnegspace}} \l_temp_tl
