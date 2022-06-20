@@ -86,13 +86,18 @@
 \newcommand{\eachwordtwostyle}{}
 \renewcommand{\eachwordtwo}{\eachwordtwostyle\grlbl}
 
+%% Each word in the third line gets wrapped inside \grlbl{} too
+\newcommand{\eachwordthreestyle}{}
+\renewcommand{\eachwordthree}{\eachwordthreestyle\grlbl}
+
 % langsci-gb4e requires a patch since it uses an older code
+% this patch also works with cgloss with the modified search
 \RequirePackage{xpatch}
 \xpatchcmd{\getwords}%
-  {\strut#3{}}%
+  {\strut#3}% removed {} from the search to accommodate clgoss
   {{\strut#3}}%
   {}{}%
-
+  
 % patch for linguex
 \@ifpackageloaded{linguex}{%
 \def\getwords(#1,#2)#3 #4\\% #1=linebox, #2=\each, #3=1st word, #4=remainder
@@ -106,3 +111,5 @@
     \more(#1,#2)#4\\%
    }%
 }{}
+
+
